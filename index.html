@@ -1,0 +1,393 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>NAPPA Program Administrator Member Map</title>
+<style>
+  :root {
+    --navy:#17395b;
+    --green:#69ad96;
+    --green-dark:#4d8f79;
+    --light:#f2f6f5;
+    --line:#d9e3e5;
+    --text:#2d3c46;
+    --muted:#667783;
+    --white:#fff;
+  }
+  * { box-sizing:border-box; }
+  body {
+    margin:0;
+    font-family:Arial, Helvetica, sans-serif;
+    color:var(--text);
+    background:#fff;
+  }
+  .wrap {
+    max-width:1180px;
+    margin:0 auto;
+    padding:18px;
+  }
+  .panel {
+    background:var(--light);
+    border-radius:16px;
+    padding:24px;
+  }
+  .top {
+    display:flex;
+    justify-content:space-between;
+    gap:20px;
+    align-items:flex-end;
+    margin-bottom:14px;
+    flex-wrap:wrap;
+  }
+  .eyebrow {
+    text-transform:uppercase;
+    letter-spacing:2px;
+    font-size:12px;
+    font-weight:700;
+    color:var(--green-dark);
+    margin-bottom:8px;
+  }
+  h2 {
+    margin:0;
+    color:var(--navy);
+    font-size:clamp(24px, 3vw, 34px);
+    line-height:1.15;
+  }
+  .count {
+    text-align:right;
+  }
+  .count strong {
+    display:block;
+    color:var(--navy);
+    font-size:36px;
+    line-height:1;
+  }
+  .count span {
+    color:var(--muted);
+    font-size:13px;
+  }
+  .layout {
+    display:grid;
+    grid-template-columns:minmax(0, 1.65fr) minmax(260px, .75fr);
+    gap:20px;
+    align-items:stretch;
+  }
+  .mapbox {
+    background:#fff;
+    border-radius:12px;
+    min-height:520px;
+    padding:10px;
+    position:relative;
+  }
+  #map {
+    width:100%;
+    min-height:500px;
+  }
+  .details {
+    background:#fff;
+    border-radius:12px;
+    padding:22px;
+    border:1px solid var(--line);
+  }
+  .details h3 {
+    margin:0 0 6px;
+    color:var(--navy);
+    font-size:24px;
+  }
+  .details .status {
+    color:var(--muted);
+    font-size:14px;
+    margin-bottom:18px;
+  }
+  .details ul {
+    margin:0;
+    padding-left:20px;
+  }
+  .details li {
+    margin:0 0 10px;
+    line-height:1.4;
+  }
+  .hint {
+    color:var(--muted);
+    font-size:14px;
+    line-height:1.5;
+    margin-top:14px;
+  }
+  .legend {
+    display:flex;
+    flex-wrap:wrap;
+    gap:18px;
+    margin-top:16px;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .legend-item {
+    display:flex;
+    gap:8px;
+    align-items:center;
+  }
+  .swatch {
+    width:15px;
+    height:15px;
+    border-radius:3px;
+    display:inline-block;
+    border:1px solid var(--line);
+  }
+  .member { background:var(--green); border-color:var(--green); }
+  .other { background:#e8eef0; }
+  .state {
+    fill:#e8eef0;
+    stroke:#fff;
+    stroke-width:1.1;
+    cursor:pointer;
+    transition:fill .15s ease, opacity .15s ease;
+  }
+  .state.member-state {
+    fill:var(--green);
+  }
+  .state.member-state:hover,
+  .state.member-state:focus {
+    fill:var(--green-dark);
+  }
+  .state:hover,
+  .state:focus {
+    opacity:.92;
+    outline:none;
+  }
+  .state.selected {
+    stroke:var(--navy);
+    stroke-width:2.2;
+  }
+  .tooltip {
+    position:absolute;
+    pointer-events:none;
+    opacity:0;
+    background:var(--navy);
+    color:#fff;
+    padding:8px 10px;
+    border-radius:8px;
+    font-size:13px;
+    line-height:1.35;
+    transform:translate(-50%, -110%);
+    transition:opacity .1s ease;
+    max-width:240px;
+    z-index:5;
+  }
+  .loading {
+    display:flex;
+    min-height:500px;
+    align-items:center;
+    justify-content:center;
+    color:var(--muted);
+    text-align:center;
+    padding:30px;
+  }
+  .error {
+    color:#7d2c2c;
+    background:#fff3f3;
+    border:1px solid #eccaca;
+    border-radius:10px;
+    padding:16px;
+    line-height:1.5;
+  }
+  @media (max-width:820px) {
+    .layout { grid-template-columns:1fr; }
+    .count { text-align:left; }
+    .mapbox { min-height:420px; }
+    #map,.loading { min-height:400px; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <section class="panel">
+    <div class="top">
+      <div>
+        <div class="eyebrow">National Footprint</div>
+        <h2>NAPPA Program Administrator Members</h2>
+      </div>
+      <div class="count">
+        <strong>22 + DC</strong>
+        <span>states represented</span>
+      </div>
+    </div>
+
+    <div class="layout">
+      <div class="mapbox">
+        <div id="map"><div class="loading">Loading interactive U.S. map…</div></div>
+        <div id="tooltip" class="tooltip"></div>
+      </div>
+
+      <aside class="details" id="details" aria-live="polite">
+        <div class="eyebrow">Explore the Network</div>
+        <h3>Select a state</h3>
+        <div class="status">Click or tap a highlighted state.</div>
+        <p class="hint">Green states currently have one or more NAPPA Program Administrator member organizations.</p>
+      </aside>
+    </div>
+
+    <div class="legend">
+      <div class="legend-item"><span class="swatch member"></span> Program Administrator member state</div>
+      <div class="legend-item"><span class="swatch other"></span> Other state</div>
+    </div>
+  </section>
+</div>
+
+<script type="module">
+const memberOrgs = {"CT": [{"name": "Connecticut Green Bank", "url": "https://www.ctgreenbank.com/"}], "DC": [{"name": "DC Green Bank", "url": "https://dcgreenbank.com/"}], "FL": [{"name": "Florida Development Finance Corporation", "url": "https://www.fdfcbonds.com/"}], "GA": [{"name": "Invest Atlanta", "url": "https://www.investatlanta.com/"}], "MA": [{"name": "MassDevelopment / Massachusetts C-PACE", "url": "https://www.massdevelopment.com/products-and-services/financing/green-finance/pace/"}], "MI": [{"name": "Lean & Green Michigan", "url": "https://www.leanandgreenmi.com/"}], "MN": [{"name": "St. Paul Port Authority / MinnPACE", "url": "https://minnpace.com/"}], "MO": [{"name": "Missouri Energy Initiative", "url": "https://www.moenergy.org/pace"}], "MT": [{"name": "Last Best PACE", "url": "https://commerce.mt.gov/Business/Programs-and-Services/CPACE"}], "NC": [{"name": "Economic Development Partnership of North Carolina", "url": "https://edpnc.com/nc-cpace/"}], "NE": [{"name": "Greater Nebraska PACE District", "url": "https://www.lincoln.ne.gov/City/Projects-Programs-Initiatives/Resilient-Lincoln/PACE"}], "NV": [{"name": "Clark County C-PACE / Slipstream", "url": "https://www.clarkcountynvpace.org/"}], "NY": [{"name": "NYCEEC", "url": "https://nyceec.com/nyc-c-pace/"}], "OH": [{"name": "OHIO PACE", "url": "https://ohpace.org/"}, {"name": "Toledo-Lucas County Port Authority", "url": "https://www.toledoport.org/bbnwo"}, {"name": "Western Reserve Port Authority / Youngstown ESID", "url": "https://neodfa.org/financing/"}], "OK": [{"name": "Oklahoma C-PACE / INCOG", "url": "https://oklahomacpace.org/"}], "OR": [{"name": "Prosper Portland", "url": "https://prosperportland.us/"}], "PA": [{"name": "Philadelphia C-PACE", "url": "https://philadelphiacpace.org/"}, {"name": "Regenerative Energy Initiative", "url": "https://thesef.org/"}], "RI": [{"name": "Rhode Island Infrastructure Bank", "url": "https://www.riib.org/"}], "TN": [{"name": "Tennessee PACE", "url": "https://tnpace.org/"}], "TX": [{"name": "Texas PACE Authority", "url": "https://www.texaspaceauthority.org/"}, {"name": "Lone Star PACE", "url": "https://www.lonestarpace.com/"}], "VA": [{"name": "Virginia PACE Authority", "url": "https://virginiapace.com/"}], "WA": [{"name": "King County C-PACER", "url": "https://kingcounty.gov/en/dept/dnrp/buildings-property/green-sustainable-building/building-decarbonization/cpacer"}], "WI": [{"name": "Wisconsin C-PACE", "url": "https://www.pacewi.org/"}]};
+const abbrToName = {"AL": "Alabama", "AK": "Alaska", "AZ": "Arizona", "AR": "Arkansas", "CA": "California", "CO": "Colorado", "CT": "Connecticut", "DE": "Delaware", "DC": "Washington, DC", "FL": "Florida", "GA": "Georgia", "HI": "Hawaii", "ID": "Idaho", "IL": "Illinois", "IN": "Indiana", "IA": "Iowa", "KS": "Kansas", "KY": "Kentucky", "LA": "Louisiana", "ME": "Maine", "MD": "Maryland", "MA": "Massachusetts", "MI": "Michigan", "MN": "Minnesota", "MS": "Mississippi", "MO": "Missouri", "MT": "Montana", "NE": "Nebraska", "NV": "Nevada", "NH": "New Hampshire", "NJ": "New Jersey", "NM": "New Mexico", "NY": "New York", "NC": "North Carolina", "ND": "North Dakota", "OH": "Ohio", "OK": "Oklahoma", "OR": "Oregon", "PA": "Pennsylvania", "RI": "Rhode Island", "SC": "South Carolina", "SD": "South Dakota", "TN": "Tennessee", "TX": "Texas", "UT": "Utah", "VT": "Vermont", "VA": "Virginia", "WA": "Washington", "WV": "West Virginia", "WI": "Wisconsin", "WY": "Wyoming"};
+const fipsToAbbr = {"01": "AL", "02": "AK", "04": "AZ", "05": "AR", "06": "CA", "08": "CO", "09": "CT", "10": "DE", "11": "DC", "12": "FL", "13": "GA", "15": "HI", "16": "ID", "17": "IL", "18": "IN", "19": "IA", "20": "KS", "21": "KY", "22": "LA", "23": "ME", "24": "MD", "25": "MA", "26": "MI", "27": "MN", "28": "MS", "29": "MO", "30": "MT", "31": "NE", "32": "NV", "33": "NH", "34": "NJ", "35": "NM", "36": "NY", "37": "NC", "38": "ND", "39": "OH", "40": "OK", "41": "OR", "42": "PA", "44": "RI", "45": "SC", "46": "SD", "47": "TN", "48": "TX", "49": "UT", "50": "VT", "51": "VA", "53": "WA", "54": "WV", "55": "WI", "56": "WY"};
+
+const mapEl = document.getElementById('map');
+const detailsEl = document.getElementById('details');
+const tooltipEl = document.getElementById('tooltip');
+const mapBox = mapEl.closest('.mapbox');
+
+function showDetails(abbr) {
+  document.querySelectorAll('.state.selected').forEach(el => el.classList.remove('selected'));
+  const selected = document.querySelector('.state[data-abbr="' + abbr + '"]');
+  if (selected) selected.classList.add('selected');
+
+  const name = abbrToName[abbr] || abbr;
+  const orgs = memberOrgs[abbr] || [];
+
+  detailsEl.innerHTML = '';
+  const eyebrow = document.createElement('div');
+  eyebrow.className = 'eyebrow';
+  eyebrow.textContent = 'Member State';
+  detailsEl.appendChild(eyebrow);
+
+  const h3 = document.createElement('h3');
+  h3.textContent = name;
+  detailsEl.appendChild(h3);
+
+  const status = document.createElement('div');
+  status.className = 'status';
+  status.textContent = orgs.length
+    ? (orgs.length === 1 ? '1 Program Administrator member organization' : orgs.length + ' Program Administrator member organizations')
+    : 'No current Program Administrator member organization';
+  detailsEl.appendChild(status);
+
+  if (orgs.length) {
+    const ul = document.createElement('ul');
+    orgs.forEach(org => {
+      const li = document.createElement('li');
+      const link = document.createElement('a');
+      link.href = org.url;
+      link.target = '_blank';
+      link.rel = 'noopener noreferrer';
+      link.textContent = org.name;
+      link.style.color = '#17395b';
+      link.style.fontWeight = '700';
+      link.style.textDecoration = 'underline';
+      link.style.textUnderlineOffset = '3px';
+      li.appendChild(link);
+      ul.appendChild(li);
+    });
+    detailsEl.appendChild(ul);
+
+    const note = document.createElement('p');
+    note.className = 'hint';
+    note.textContent = 'Select an organization to visit its program website.';
+    detailsEl.appendChild(note);
+  } else {
+    const p = document.createElement('p');
+    p.className = 'hint';
+    p.textContent = 'This state is not currently highlighted in NAPPA’s Program Administrator member footprint.';
+    detailsEl.appendChild(p);
+  }
+}
+
+function showTooltip(event, abbr) {
+  const name = abbrToName[abbr] || abbr;
+  const orgs = memberOrgs[abbr] || [];
+  tooltipEl.innerHTML = '<strong>' + name + '</strong>' + (orgs.length ? '<br>' + orgs.length + (orgs.length === 1 ? ' member organization' : ' member organizations') : '');
+  const box = mapBox.getBoundingClientRect();
+  tooltipEl.style.left = (event.clientX - box.left) + 'px';
+  tooltipEl.style.top = (event.clientY - box.top) + 'px';
+  tooltipEl.style.opacity = '1';
+}
+
+function hideTooltip() {
+  tooltipEl.style.opacity = '0';
+}
+
+try {
+  const [d3, topo, usMod] = await Promise.all([
+    import('https://cdn.jsdelivr.net/npm/d3@7.9.0/+esm'),
+    import('https://cdn.jsdelivr.net/npm/topojson-client@3.1.0/+esm'),
+    import('https://cdn.jsdelivr.net/npm/us-atlas@3.0.1/states-10m.json/+esm')
+  ]);
+
+  const us = usMod.default;
+  const states = topo.feature(us, us.objects.states).features;
+
+  mapEl.innerHTML = '';
+  const width = 900;
+  const height = 540;
+
+  const svg = d3.select(mapEl)
+    .append('svg')
+    .attr('viewBox', `0 0 ${width} ${height}`)
+    .attr('role', 'img')
+    .attr('aria-label', 'Interactive map of NAPPA Program Administrator member states')
+    .style('width', '100%')
+    .style('height', 'auto')
+    .style('display', 'block');
+
+  const projection = d3.geoAlbersUsa()
+    .translate([width / 2, height / 2])
+    .scale(1120);
+
+  const path = d3.geoPath(projection);
+
+  svg.selectAll('path.state')
+    .data(states)
+    .join('path')
+    .attr('class', d => {
+      const id = String(d.id).padStart(2, '0');
+      const abbr = fipsToAbbr[id];
+      return memberOrgs[abbr] ? 'state member-state' : 'state';
+    })
+    .attr('data-abbr', d => fipsToAbbr[String(d.id).padStart(2, '0')] || '')
+    .attr('d', path)
+    .attr('tabindex', 0)
+    .attr('aria-label', d => {
+      const abbr = fipsToAbbr[String(d.id).padStart(2, '0')] || '';
+      const name = abbrToName[abbr] || 'State';
+      const orgs = memberOrgs[abbr] || [];
+      return orgs.length ? `${name}, ${orgs.length} NAPPA member organization${orgs.length === 1 ? '' : 's'}` : name;
+    })
+    .on('click', function(event, d) {
+      const abbr = fipsToAbbr[String(d.id).padStart(2, '0')];
+      if (abbr) showDetails(abbr);
+    })
+    .on('keydown', function(event, d) {
+      if (event.key === 'Enter' || event.key === ' ') {
+        event.preventDefault();
+        const abbr = fipsToAbbr[String(d.id).padStart(2, '0')];
+        if (abbr) showDetails(abbr);
+      }
+    })
+    .on('mousemove', function(event, d) {
+      const abbr = fipsToAbbr[String(d.id).padStart(2, '0')];
+      if (abbr) showTooltip(event, abbr);
+    })
+    .on('mouseleave', hideTooltip);
+
+  svg.append('path')
+    .datum(topo.mesh(us, us.objects.states, (a, b) => a !== b))
+    .attr('fill', 'none')
+    .attr('stroke', '#ffffff')
+    .attr('stroke-width', 0.7)
+    .attr('pointer-events', 'none')
+    .attr('d', path);
+
+} catch (err) {
+  mapEl.innerHTML = '<div class="error"><strong>The map could not load.</strong><br>Please confirm this page is being served over HTTPS and that jsDelivr is not blocked by the host.</div>';
+  console.error(err);
+}
+</script>
+</body>
+</html>
